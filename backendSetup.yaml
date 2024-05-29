@@ -46,7 +46,7 @@
     - If valid:
         - Update game state
         - Broadcast move via "move" event
-        - Send updated board state via "boardState" event
+        - Send updated board state via "boardState" event. PS - use chess.fen()
     - If invalid:
         - Log error message
 

@@ -1,2 +1,1 @@
-const socket = io(); // makes connection from frontend 
-
+const socket = io(); // makes connection from frontend
