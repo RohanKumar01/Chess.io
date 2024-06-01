@@ -12,7 +12,7 @@ const io = socket(server);
 const chess = new Chess();
 
 let players = {};
-let currentPlayer = "W";
+let currentPlayer = "w";
 
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
