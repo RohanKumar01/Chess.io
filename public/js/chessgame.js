@@ -78,7 +78,7 @@ if (playerRole === "b") {
 const handleMove = (source, target) => {
   const move = {
     from: `${String.fromCharCode(97 + source.col)}${8 - source.row}`,
-    to: `${String.fromCharCode(97 + target.col)}${8 - source.row}`,
+    to: `${String.fromCharCode(97 + target.col)}${8 - target.row}`,
     promotion: "q",
   };
   socket.emit("move", move);
@@ -112,9 +112,10 @@ socket.on("spectatorRole", function () {
 });
 socket.on("boardState", function (fen) {
   chess.load(fen);
+  renderBoard();
 });
 socket.on("move", function (move) {
   chess.move(move);
-  renderBoard;
+  renderBoard();
 });
 renderBoard();

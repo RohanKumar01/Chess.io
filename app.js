@@ -12,7 +12,7 @@ const io = socket(server);
 const chess = new Chess();
 
 let players = {};
-let currentPlayer = "w";
+let spectators = [];
 
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
@@ -24,9 +24,7 @@ app.get("/", (req, res) => {
 io.on("connection", (uniquesocket) => {
   console.log("connected");
 
-  // Gives the first connection the role of white player
-  // then the second connection one is given the role of black player
-  // after this all the connection will be gven the role of spectetor
+  // Assign roles to new connections
   if (!players.white) {
     players.white = uniquesocket.id;
     uniquesocket.emit("playerRole", "w");
@@ -34,30 +32,41 @@ io.on("connection", (uniquesocket) => {
     players.black = uniquesocket.id;
     uniquesocket.emit("playerRole", "b");
   } else {
-    uniquesocket.emit("spectetorRole");
+    spectators.push(uniquesocket.id);
+    uniquesocket.emit("spectatorRole");
   }
+
+  uniquesocket.emit("boardState", chess.fen());
 
   uniquesocket.on("disconnect", () => {
     if (uniquesocket.id === players.white) {
-      delete players.white;
+      players.white = null;
+      if (spectators.length > 0) {
+        players.white = spectators.shift();
+        io.to(players.white).emit("playerRole", "w");
+      }
     } else if (uniquesocket.id === players.black) {
-      delete players.black;
+      players.black = null;
+      if (spectators.length > 0) {
+        players.black = spectators.shift();
+        io.to(players.black).emit("playerRole", "b");
+      }
+    } else {
+      spectators = spectators.filter((id) => id !== uniquesocket.id);
     }
   });
 
   uniquesocket.on("move", (move) => {
     try {
-      if (chess.turn() == "w" && uniquesocket.id !== players.white) return;
-      if (chess.turn() == "b" && uniquesocket.id !== players.black) return;
+      if (chess.turn() === "w" && uniquesocket.id !== players.white) return;
+      if (chess.turn() === "b" && uniquesocket.id !== players.black) return;
 
       const result = chess.move(move);
       if (result) {
-        currentPlayer = chess.turn();
         io.emit("move", move);
-        onabort.emit("boardState", chess.fen());
+        io.emit("boardState", chess.fen());
       } else {
-        alert("Invalid move:", move);
-        uniquesocket.emit("InvalidMove", move);
+        uniquesocket.emit("invalidMove", move);
       }
     } catch (error) {
       console.log(error);
@@ -65,4 +74,6 @@ io.on("connection", (uniquesocket) => {
   });
 });
 
-server.listen(3000);
+server.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
